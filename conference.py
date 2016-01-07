@@ -39,6 +39,7 @@ from models import TeeShirtSize
 from models import Session
 from models import SessionForm
 from models import SessionForms
+from models import SessionSpeakerQueryForm
 from models import SessionType
 
 from settings import WEB_CLIENT_ID
@@ -106,7 +107,7 @@ SESS_POST_REQUEST = endpoints.ResourceContainer(
 class ConferenceApi(remote.Service):
     """Conference API v0.1"""
 
-# - - - Conference objects - - - - - - - - - - - - - - - - -
+# ------------------ Conference related APIs -------------------------------
 
     def _copyConferenceToForm(self, conf, displayName):
         """Copy relevant fields from Conference to ConferenceForm."""
@@ -325,30 +326,6 @@ class ConferenceApi(remote.Service):
             items=[self._copyConferenceToForm(conf, getattr(prof, 'displayName')) for conf in confs]
         )
 
-    @endpoints.method(SESS_POST_REQUEST, SessionForm, path='session/{websafeConferenceKey}',
-            http_method='POST', name='createSession')
-    def createSession(self, request):
-        """Create new session in a conference."""
-        return self._createSessionObject(request)
-        
-    @endpoints.method(SESS_GET_REQUEST, SessionForms,
-            path='conference/{websafeConferenceKey}/sessions',
-            http_method='POST', name='getConferenceSessions')
-    def getConferenceSessions(self, request):
-        """Return all sessions in a given conference."""
-        print "Start Sessions thing"
-
-        # create ancestor query for all sessions for this Conference
-        sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey)).fetch()
-        print "SESSIONS ---------------"
-        print sessions
-        # return set of SessionForm objects
-        return SessionForms(
-            items=[self._copySessionToForm(session) for session in sessions]
-        )
-
-
-
     def _getQuery(self, request):
         """Return formatted query from the submitted filters."""
         q = Conference.query()
@@ -422,8 +399,43 @@ class ConferenceApi(remote.Service):
                 conferences]
         )
 
+# ---------------- Session related APIs -----------------------------
 
-# - - - Profile objects - - - - - - - - - - - - - - - - - - -
+    @endpoints.method(SESS_POST_REQUEST, SessionForm, path='session/{websafeConferenceKey}',
+            http_method='POST', name='createSession')
+    def createSession(self, request):
+        """Create new session in a conference."""
+        return self._createSessionObject(request)
+        
+    @endpoints.method(SESS_GET_REQUEST, SessionForms,
+            path='conference/{websafeConferenceKey}/sessions',
+            http_method='POST', name='getConferenceSessions')
+    def getConferenceSessions(self, request):
+        """Return all sessions in a given conference."""
+
+        # create ancestor query for all sessions for this Conference
+        sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey)).fetch()
+
+        # return set of SessionForm objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+    @endpoints.method(SessionSpeakerQueryForm, SessionForms,
+            path='getSessionsBySpeaker',
+            http_method='POST', name='getSessionsBySpeaker')
+    def getSessionsBySpeaker(self, request):
+        """Return all sessions from a given speaker."""
+        
+        # create ancestor query for all sessions for this Conference
+        sessions = Session.query(Session.speaker==request.speakerName).fetch()
+        # return set of SessionForm objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+
+# --------------- Profile related APIs  --------------------------
 
     def _copyProfileToForm(self, prof):
         """Copy relevant fields from Profile to ProfileForm."""

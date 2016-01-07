@@ -118,6 +118,10 @@ class SessionForms(messages.Message):
     """SessionForms -- multiple Sessions outbound form message"""
     items = messages.MessageField(SessionForm, 1, repeated=True)
 
+class SessionSpeakerQueryForm(messages.Message):
+    """SessionSpeakerQueryForm -- Session query by speaker inbound message"""
+    speakerName = messages.StringField(1)
+
 # ------- enum types --------- #
 
 class TeeShirtSize(messages.Enum):

@@ -40,6 +40,7 @@ from models import Session
 from models import SessionForm
 from models import SessionForms
 from models import SessionSpeakerQueryForm
+from models import SessionTypeQueryForm
 from models import SessionType
 
 from settings import WEB_CLIENT_ID
@@ -96,6 +97,11 @@ SESS_GET_REQUEST = endpoints.ResourceContainer(
 
 SESS_POST_REQUEST = endpoints.ResourceContainer(
     SessionForm,
+    websafeConferenceKey=messages.StringField(1),
+)
+
+SESS_TYPE_GET_REQUEST = endpoints.ResourceContainer(
+    SessionTypeQueryForm,
     websafeConferenceKey=messages.StringField(1),
 )
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -381,7 +387,6 @@ class ConferenceApi(remote.Service):
     def queryConferences(self, request):
         """Query for conferences."""
         conferences = self._getQuery(request)
-        print "debug queryConferences"
 
         # need to fetch organiser displayName from profiles
         # get all keys and use get_multi for speed
@@ -429,6 +434,23 @@ class ConferenceApi(remote.Service):
         
         # create ancestor query for all sessions for this Conference
         sessions = Session.query(Session.speaker==request.speakerName).fetch()
+        # return set of SessionForm objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+    @endpoints.method(SESS_TYPE_GET_REQUEST, SessionForms,
+            path='conference/{websafeConferenceKey}/sessionsByType',
+            http_method='POST', name='getConferenceSessionsByType')
+    def getConferenceSessionsByType(self, request):
+        """Return all sessions in a given conference, from a specific type."""
+
+        # create ancestor query for all sessions for this Conference
+        sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey))
+
+        # following filter is by type
+        sessions = sessions.filter(Session.typeOfSession==request.sessionType).fetch()
+
         # return set of SessionForm objects
         return SessionForms(
             items=[self._copySessionToForm(session) for session in sessions]

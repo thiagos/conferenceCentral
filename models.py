@@ -38,7 +38,7 @@ class Conference(ndb.Model):
     topics          = ndb.StringProperty(repeated=True)
     city            = ndb.StringProperty()
     startDate       = ndb.DateProperty()
-    month           = ndb.IntegerProperty() # TODO: do we need for indexing like Java?
+    month           = ndb.IntegerProperty()
     endDate         = ndb.DateProperty()
     maxAttendees    = ndb.IntegerProperty()
     seatsAvailable  = ndb.IntegerProperty()
@@ -113,6 +113,10 @@ class SessionForm(messages.Message):
     typeOfSession = messages.EnumField('SessionType', 5)
     date          = messages.StringField(6)
     startTime     = messages.IntegerField(7) # in format HH24MISS
+
+class SessionForms(messages.Message):
+    """SessionForms -- multiple Sessions outbound form message"""
+    items = messages.MessageField(SessionForm, 1, repeated=True)
 
 # ------- enum types --------- #
 

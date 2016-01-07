@@ -38,6 +38,7 @@ from models import ConferenceQueryForms
 from models import TeeShirtSize
 from models import Session
 from models import SessionForm
+from models import SessionForms
 from models import SessionType
 
 from settings import WEB_CLIENT_ID
@@ -84,6 +85,11 @@ CONF_GET_REQUEST = endpoints.ResourceContainer(
 
 CONF_POST_REQUEST = endpoints.ResourceContainer(
     ConferenceForm,
+    websafeConferenceKey=messages.StringField(1),
+)
+
+SESS_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
     websafeConferenceKey=messages.StringField(1),
 )
 
@@ -180,6 +186,8 @@ class ConferenceApi(remote.Service):
                 # convert t-shirt string to Enum; just copy others
                 if field.name == 'typeOfSession':
                     setattr(sess, field.name, getattr(SessionType, getattr(sess_data, field.name)))
+                elif field.name == 'date':
+                    setattr(sess, field.name, str(getattr(sess_data, field.name)))
                 else:
                     setattr(sess, field.name, getattr(sess_data, field.name))
         return sess
@@ -191,8 +199,6 @@ class ConferenceApi(remote.Service):
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
         user_id = getUserId(user)
-
-        print str(request)
 
         if not request.sessionName:
             raise endpoints.BadRequestException("Session 'name' field required")
@@ -278,13 +284,6 @@ class ConferenceApi(remote.Service):
         """Create new conference."""
         return self._createConferenceObject(request)
 
-    @endpoints.method(SESS_POST_REQUEST, SessionForm, path='session/{websafeConferenceKey}',
-            http_method='POST', name='createSession')
-    def createSession(self, request):
-        """Create new session in a conference."""
-        return self._createSessionObject(request)
-
-
     @endpoints.method(CONF_POST_REQUEST, ConferenceForm,
             path='conference/{websafeConferenceKey}',
             http_method='PUT', name='updateConference')
@@ -307,7 +306,6 @@ class ConferenceApi(remote.Service):
         # return ConferenceForm
         return self._copyConferenceToForm(conf, getattr(prof, 'displayName'))
 
-
     @endpoints.method(message_types.VoidMessage, ConferenceForms,
             path='getConferencesCreated',
             http_method='POST', name='getConferencesCreated')
@@ -326,6 +324,29 @@ class ConferenceApi(remote.Service):
         return ConferenceForms(
             items=[self._copyConferenceToForm(conf, getattr(prof, 'displayName')) for conf in confs]
         )
+
+    @endpoints.method(SESS_POST_REQUEST, SessionForm, path='session/{websafeConferenceKey}',
+            http_method='POST', name='createSession')
+    def createSession(self, request):
+        """Create new session in a conference."""
+        return self._createSessionObject(request)
+        
+    @endpoints.method(SESS_GET_REQUEST, SessionForms,
+            path='conference/{websafeConferenceKey}/sessions',
+            http_method='POST', name='getConferenceSessions')
+    def getConferenceSessions(self, request):
+        """Return all sessions in a given conference."""
+        print "Start Sessions thing"
+
+        # create ancestor query for all sessions for this Conference
+        sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey)).fetch()
+        print "SESSIONS ---------------"
+        print sessions
+        # return set of SessionForm objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
 
 
     def _getQuery(self, request):
@@ -383,6 +404,7 @@ class ConferenceApi(remote.Service):
     def queryConferences(self, request):
         """Query for conferences."""
         conferences = self._getQuery(request)
+        print "debug queryConferences"
 
         # need to fetch organiser displayName from profiles
         # get all keys and use get_multi for speed

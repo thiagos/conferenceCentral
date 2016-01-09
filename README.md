@@ -4,9 +4,15 @@ Conference Central App
 This App consists of a set of backend APIs, implemented using Google App Engine,
 to manage participants, conferences and sessions within those conferences.
 
+Sessions ancestors
+------------------
+
 Each session has its conference entity as its parent. This simplifies the
 API 'getConferenceSessions' for instance, as a query by ancestor returns the required info,
  and keeps the data better organized overall.
+
+Sessions Messages Implementation
+--------------------------------
 
 The requirements on how to query conferences were open enough so that a generic
 'ConferenceQueryForm' message, with (field, operator, value) keys was enough. However, 
@@ -21,3 +27,10 @@ in API 'getSessionsBySpeaker', the user would need to fill the field 'field' wit
 To avoid that, I prefered to create specific inbound messages for each specific case, i.e.,
 classes 'SessionSpeakerQueryForm' and 'SessionTypeQueryForm' were created, with just the 
 specific field used by filter as parameter.
+
+Sessions wishlist
+-----------------
+
+ Similar to conferences to attend, the session wishilist keys will be stored as a list 
+ into the user profile. 
+ 

@@ -29,6 +29,7 @@ class Profile(ndb.Model):
     mainEmail = ndb.StringProperty()
     teeShirtSize = ndb.StringProperty(default='NOT_SPECIFIED')
     conferenceKeysToAttend = ndb.StringProperty(repeated=True)
+    sessionsWishlist = ndb.StringProperty(repeated=True)
 
 class Conference(ndb.Model):
     """Conference -- Conference object"""
@@ -66,6 +67,7 @@ class ProfileForm(messages.Message):
     mainEmail = messages.StringField(2)
     teeShirtSize = messages.EnumField('TeeShirtSize', 3)
     conferenceKeysToAttend = messages.StringField(4, repeated=True)
+    sessionsWishlist = messages.StringField(5, repeated=True)
 
 class StringMessage(messages.Message):
     """StringMessage-- outbound (single) string message"""
@@ -113,6 +115,7 @@ class SessionForm(messages.Message):
     typeOfSession = messages.EnumField('SessionType', 5)
     date          = messages.StringField(6)
     startTime     = messages.IntegerField(7) # in format HH24MISS
+    websafeKey    = messages.StringField(8)
 
 class SessionForms(messages.Message):
     """SessionForms -- multiple Sessions outbound form message"""

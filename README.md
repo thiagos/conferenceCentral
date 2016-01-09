@@ -20,7 +20,7 @@ the requirements on Sessions queries are slightly different, since specific APIs
 'getSessionsBySpeaker' and 'getConferenceSessionsByType' were required.
 
 Based on that, even though a generic 'SessionQueryForm', with same fields as its 
-Conference correspondent, would work, the user experience wouldn't be the best:
+Conference correspondent would work, the user experience wouldn't be the best:
 in API 'getSessionsBySpeaker', the user would need to fill the field 'field' with value
 'speaker', and field 'value' with the speaker name (confusing, right... :) )
 
@@ -33,4 +33,7 @@ Sessions wishlist
 
  Similar to conferences to attend, the session wishilist keys will be stored as a list 
  into the user profile. 
+
+ The information retrieved by API 'getSessionsInWishlist' is already present in API 'getProfile',
+ but a separate Message class with just the sessionsWishlist was created for this purpose anyways.
  

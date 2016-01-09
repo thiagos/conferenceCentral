@@ -42,6 +42,7 @@ from models import SessionForms
 from models import SessionSpeakerQueryForm
 from models import SessionTypeQueryForm
 from models import SessionType
+from models import SessionWishlistForm
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -104,6 +105,7 @@ SESS_TYPE_GET_REQUEST = endpoints.ResourceContainer(
     SessionTypeQueryForm,
     websafeConferenceKey=messages.StringField(1),
 )
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -495,6 +497,15 @@ class ConferenceApi(remote.Service):
     def deleteSessionInWishlist(self, request):
         """Remove Session from User wishlist."""
         return self._manageSessionsWishlist(request, add=False)
+
+    @endpoints.method(message_types.VoidMessage, SessionWishlistForm,
+            path='getSessionsInWishlist',
+            http_method='GET', name='getSessionsInWishlist')
+    def getSessionsInWishlist(self, request):
+        """Get sessions in User wishlist."""
+        prof = self._getProfileFromUser() # get user Profile
+        return SessionWishlistForm(
+            sessionsWishlist=prof.sessionsWishlist)
 
 # ---------------- Session helper functions ----------------------
 

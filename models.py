@@ -129,6 +129,10 @@ class SessionTypeQueryForm(messages.Message):
     """SessionSpeakerQueryForm -- Session query by speaker inbound message"""
     sessionType = messages.StringField(1)
 
+class SessionWishlistForm(messages.Message):
+    """SessionWishlistForm -- Session wishlist outbound message"""
+    sessionsWishlist = messages.StringField(1, repeated=True)
+
 # ------- enum types --------- #
 
 class TeeShirtSize(messages.Enum):

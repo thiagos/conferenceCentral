@@ -1,39 +1,78 @@
-Conference Central App
-======================
+#Conference Central App
+
 
 This App consists of a set of backend APIs, implemented using Google App Engine,
 to manage participants, conferences and sessions within those conferences.
 
-Sessions ancestors
-------------------
+
+##Task 1: Add Sessions to a Conference
+
+###Sessions ancestors
 
 Each session has its conference entity as its parent. This simplifies the
-API 'getConferenceSessions' for instance, as a query by ancestor returns the required info,
- and keeps the data better organized overall.
+API *getConferenceSessions* for instance, as a query by ancestor returns the required info,
+and keeps the data better organized overall. 
 
-Sessions Messages Implementation
---------------------------------
+###Session speaker
+
+For simplicity, for now, the speaker will consist of a string field on the Session entity.
+
+###Sessions Messages Implementation
 
 The requirements on how to query conferences were open enough so that a generic
 'ConferenceQueryForm' message, with (field, operator, value) keys was enough. However, 
 the requirements on Sessions queries are slightly different, since specific APIs like 
-'getSessionsBySpeaker' and 'getConferenceSessionsByType' were required.
+*getSessionsBySpeaker* and *getConferenceSessionsByType* were required.
 
 Based on that, even though a generic 'SessionQueryForm', with same fields as its 
 Conference correspondent would work, the user experience wouldn't be the best:
-in API 'getSessionsBySpeaker', the user would need to fill the field 'field' with value
+in API *getSessionsBySpeaker*, the user would need to fill the field 'field' with value
 'speaker', and field 'value' with the speaker name (confusing, right... :) )
 
-To avoid that, I prefered to create specific inbound messages for each specific case, i.e.,
+To avoid that, I prefered to create specific inbound messages for each case, i.e.,
 classes 'SessionSpeakerQueryForm' and 'SessionTypeQueryForm' were created, with just the 
-specific field used by filter as parameter.
+specific field used by each filter as parameter.
 
-Sessions wishlist
------------------
+##Task 2: Add Sessions to User Wishlist
 
- Similar to conferences to attend, the session wishilist keys will be stored as a list 
- into the user profile. 
+Similar to conferences to attend, the session wishilist keys will be stored as a list 
+into the user profile. 
 
- The information retrieved by API 'getSessionsInWishlist' is already present in API 'getProfile',
- but a separate Message class with just the sessionsWishlist was created for this purpose anyways.
+The information retrieved by API *getSessionsInWishlist* is already present in API *getProfile*,
+but a separate Message class with just the sessionsWishlist was created for this purpose anyways.
  
+##Task 3: Work on indexes and queries
+
+
+For all the APIs required up to this point, no query by more than one property was required.
+as indexes on single properties are created by default, no manual index creation on the Sessions
+entity was needed so far.
+
+To use new indexes, 2 new APIs were created:
+- *getQuickWorkshops*: return all workshops only with duration at most 2h.
+- *getSessionsBySpeakerAndDate*: returns all sessions from a specific speaker, on a specific date.
+
+For that, 2 new composite indexes were created in index.yaml file:
+- kind: Session
+ properties:
+ - name: speaker
+ - name: date
+
+- kind: Session
+ properties:
+ - name: typeOfSession
+ - name: duration
+
+###The problematic query
+
+The problem with finding all non-workshop sessions before 7PM is that is uses inequality filters
+in more than one property.
+
+One possible solution in our scenario is based on the fact that in our system design, the type of sessions 
+are enumerated, so we can turn the inequality on the typeOfSession into a 'member of' filter, where 
+instead of looking for sessionType != 'WORKSHOP', we can look for sessionType in ['LECTURE', 'KEYNOTE'].
+
+This enumeration shall be clear for the endUser, and new kinds of sessions would require a new system
+deployment to be supported.
+
+This query was implemented in API *getEarlyNonWorkshops*.

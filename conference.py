@@ -43,6 +43,7 @@ from models import SessionSpeakerQueryForm
 from models import SessionTypeQueryForm
 from models import SessionType
 from models import SessionWishlistForm
+from models import SessSpeakerDateQueryForm
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -506,6 +507,58 @@ class ConferenceApi(remote.Service):
         prof = self._getProfileFromUser() # get user Profile
         return SessionWishlistForm(
             sessionsWishlist=prof.sessionsWishlist)
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+            path='getQuickWorkshops',
+            http_method='GET', name='getQuickWorkshops')
+    def getQuickWorkshops(self, request):
+        """Get sessions in of type WORKSHOP and duration at most 2h."""
+        # create Session query with the specific filters
+        sessions = Session.query()
+        sessions = sessions.filter(Session.typeOfSession == 'WORKSHOP')
+        sessions = sessions.filter(Session.duration <= 2)
+
+        # return the SessionForms objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+    @endpoints.method(SessSpeakerDateQueryForm, SessionForms,
+            path='getSessionsBySpeakerAndDateRange',
+            http_method='GET', name='getSessionsBySpeakerAndDateRange')
+    def getSessionsBySpeakerAndDate(self, request):
+        """Return all sessions from a given speaker, in a given date range."""
+
+        # create ancestor query for all sessions for this Conference
+        sessions = Session.query()
+        # following filter is by type
+        sessions = sessions.filter(Session.speaker == request.speakerName)
+        sessions = sessions.filter(Session.date >= datetime.strptime(request.startDate, "%Y-%m-%d").date())
+        sessions = sessions.filter(Session.date <= datetime.strptime(request.endDate, "%Y-%m-%d").date())
+
+        # return set of SessionForm objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+            path='getEarlyNonWorkshops',
+            http_method='GET', name='getEarlyNonWorkshops')
+    def getEarlyNonWorkshops(self, request):
+        """Return all non-Workshop sessions, earlier than 7PM."""
+
+        # create ancestor query for all sessions for this Conference
+        sessions = Session.query()
+        # following filter is by type
+        sessions = sessions.filter(Session.startTime < 190000)
+        sessions = sessions.filter(Session.typeOfSession.IN(['LECTURE', 'KEYNOTE']))
+
+        # return set of SessionForm objects
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+        
 
 # ---------------- Session helper functions ----------------------
 

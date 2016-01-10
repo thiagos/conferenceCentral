@@ -133,6 +133,11 @@ class SessionWishlistForm(messages.Message):
     """SessionWishlistForm -- Session wishlist outbound message"""
     sessionsWishlist = messages.StringField(1, repeated=True)
 
+class SessSpeakerDateQueryForm(messages.Message):
+    speakerName = messages.StringField(1)
+    startDate   = messages.StringField(2)
+    endDate     = messages.StringField(3)
+
 # ------- enum types --------- #
 
 class TeeShirtSize(messages.Enum):

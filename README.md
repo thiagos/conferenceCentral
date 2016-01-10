@@ -53,6 +53,7 @@ To use new indexes, 2 new APIs were created:
 - *getSessionsBySpeakerAndDate*: returns all sessions from a specific speaker, on a specific date.
 
 For that, 2 new composite indexes were created in index.yaml file:
+```
 - kind: Session
  properties:
  - name: speaker
@@ -62,6 +63,7 @@ For that, 2 new composite indexes were created in index.yaml file:
  properties:
  - name: typeOfSession
  - name: duration
+```
 
 ###The problematic query
 
@@ -76,3 +78,14 @@ This enumeration shall be clear for the endUser, and new kinds of sessions would
 deployment to be supported.
 
 This query was implemented in API *getEarlyNonWorkshops*.
+
+##Task 4: Add a task
+
+In the event of a session creation, a task will query all sessions on that conference, and if there are 
+2 or more sessions from this current speaker, he will be featured via the *getFeaturedSpeaker* API.
+
+The memcache was used for that, populating a single key named 'FEATURED_SPEAKER'. 
+
+No management for cleanup of that key was implemented, but it could be done using a cron task, which 
+would periodically remove the memcache entry in case all sessions there are less than 2 sessions from that 
+speaker still to happen.

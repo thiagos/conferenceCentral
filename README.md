@@ -17,19 +17,19 @@ and keeps the data better organized overall.
 
 Regarding the Session entity properties:
 
-The 'typeOfSession' property is an enumerated StringProperty, assuming values 'NOT_SPECIFIED',
+The 'typeOfSession' property is an enumerated *StringProperty*, assuming values 'NOT_SPECIFIED',
 'LECTURE', 'KEYNOTE' or 'WORKSHOP'. If an invalid value is received during a session creation,
 an error will be returned.
 
-The 'highlights' property is a repeated StringProperty, as a Session can have multiple highlights.
+The 'highlights' property is a repeated *StringProperty*, as a Session can have multiple highlights.
 
-The 'duration' property is an IntegerProperty, representing the Session duration, in minutes,
+The 'duration' property is an *IntegerProperty*, representing the Session duration, in minutes,
 since storing in hours would not allow 30 min sessions for instance, while storing in seconds
 is too granular, not providing valuable information for this type of event.
 
-For simplicity, for now, the 'speaker' property consists of a StringProperty with the speaker name.
+For simplicity, for now, the 'speaker' property consists of a *StringProperty* with the speaker name.
 
-Lastly, the 'date' property is a DateProperty, while the 'startTime' property is a TimeProperty,
+Lastly, the 'date' property is a *DateProperty*, while the 'startTime' property is a *TimeProperty*,
 as expected for those types of properties. Inputs formats are 'YYYY-MM-DD' and 'HH24:MI'. If an
 incorrect format is provided, a proper error is returned.
 
@@ -88,7 +88,8 @@ in more than one property.
 
 One possible solution in our scenario is based on the fact that in our system design, the type of sessions 
 are enumerated, so we can turn the inequality on the typeOfSession into a 'member of' filter, where 
-instead of looking for sessionType != 'WORKSHOP', we can look for sessionType in ['NOT_SPECIFIED, 'LECTURE', 'KEYNOTE'].
+instead of looking for sessionType != 'WORKSHOP', we can look for
+sessionType in ['NOT_SPECIFIED', 'LECTURE', 'KEYNOTE'].
 
 This enumeration shall be clear for the endUser, and new kinds of sessions would require a new system
 deployment to be supported.

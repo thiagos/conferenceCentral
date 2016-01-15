@@ -23,6 +23,7 @@ from protorpc import remote
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
+from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
 from models import ConflictException
 from models import Profile
@@ -450,7 +451,11 @@ class ConferenceApi(remote.Service):
         """Return all sessions in a given conference."""
 
         # create ancestor query for all sessions for this Conference
-        sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey)).fetch()
+        try:
+            sessions = Session.query(ancestor=ndb.Key(urlsafe=request.websafeConferenceKey)).fetch()
+        except ProtocolBufferDecodeError:
+            raise endpoints.NotFoundException(
+                'No sessions found for conference with key: %s' % request.websafeConferenceKey)
 
         # return set of SessionForm objects
         return SessionForms(
@@ -551,7 +556,9 @@ class ConferenceApi(remote.Service):
         sessions = Session.query()
         # filter sessions by startTime and typeOfSession
         sessions = sessions.filter(Session.startTime < 190000)
-        sessions = sessions.filter(Session.typeOfSession.IN(['LECTURE', 'KEYNOTE']))
+        # retrieve sessions all sessions that are not WORKSHOP, i.e., are from any other possible
+        # enumeration value
+        sessions = sessions.filter(Session.typeOfSession.IN(['NOT_SPECIFIED', 'LECTURE', 'KEYNOTE']))
 
         # return set of SessionForm objects
         return SessionForms(
@@ -564,16 +571,13 @@ class ConferenceApi(remote.Service):
 
     def _copySessionToForm(self, sess_data):
         """Copy relevant fields from Session to SessionForm."""
-        # copy relevant fields from Profile to ProfileForm
         sess = SessionForm()
-        print "========= Session Data ============="
-        print sess_data
         for field in sess.all_fields():
             if hasattr(sess_data, field.name):
                 # convert t-shirt string to Enum; just copy others
                 if field.name == 'typeOfSession':
                     setattr(sess, field.name, getattr(SessionType, getattr(sess_data, field.name)))
-                elif field.name == 'date':
+                elif field.name in ['date', 'startTime']:
                     setattr(sess, field.name, str(getattr(sess_data, field.name)))
                 else:
                     setattr(sess, field.name, getattr(sess_data, field.name))
@@ -610,7 +614,16 @@ class ConferenceApi(remote.Service):
         
         # convert dates from strings to Date objects
         if data['date']:
-            data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
+            try:
+                data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
+            except ValueError as e:
+                raise endpoints.BadRequestException(str(e)) 
+
+        if data['startTime']:
+            try:
+                data['startTime'] = datetime.strptime(data['startTime'][:5], "%H:%M").time()
+            except ValueError as e:
+                raise endpoints.BadRequestException(str(e)) 
 
         # Adjust session type enum field
         if data['typeOfSession']:
@@ -779,8 +792,6 @@ class ConferenceApi(remote.Service):
         """Manage memcache featured speaker. If current checked speaker
            should be featured, replace any previous speaker"""
         sessions = Session.query(ancestor=ndb.Key(urlsafe=conferenceKey))
-        print "==================== sessions ==================="
-        print sessions
         sessions = sessions.filter(Session.speaker == speaker).fetch()
         if len(sessions) > 1:
             speakerAnnouncement = SPEAKER_STR % (speaker, 

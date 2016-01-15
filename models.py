@@ -52,7 +52,7 @@ class Session(ndb.Model):
     duration      = ndb.IntegerProperty()
     typeOfSession = ndb.StringProperty(default='NOT_SPECIFIED')
     date          = ndb.DateProperty()
-    startTime     = ndb.IntegerProperty() # in format HH24MISS
+    startTime     = ndb.TimeProperty()
 
 # ---------- API messages ------------ #
 
@@ -113,8 +113,8 @@ class SessionForm(messages.Message):
     speaker       = messages.StringField(3)
     duration      = messages.IntegerField(4)
     typeOfSession = messages.EnumField('SessionType', 5)
-    date          = messages.StringField(6)
-    startTime     = messages.IntegerField(7) # in format HH24MISS
+    date          = messages.StringField(6) # in format YYYY-MM-DD
+    startTime     = messages.StringField(7) # in format HH24:MI
     websafeKey    = messages.StringField(8)
 
 class SessionForms(messages.Message):

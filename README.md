@@ -13,9 +13,25 @@ Each session has its conference entity as its parent. This simplifies the
 API *getConferenceSessions* for instance, as a query by ancestor returns the required info,
 and keeps the data better organized overall. 
 
-###Session speaker
+###Session data types
 
-For simplicity, for now, the speaker will consist of a string field on the Session entity.
+Regarding the Session entity properties:
+
+The 'typeOfSession' property is an enumerated StringProperty, assuming values 'NOT_SPECIFIED',
+'LECTURE', 'KEYNOTE' or 'WORKSHOP'. If an invalid value is received during a session creation,
+an error will be returned.
+
+The 'highlights' property is a repeated StringProperty, as a Session can have multiple highlights.
+
+The 'duration' property is an IntegerProperty, representing the Session duration, in minutes,
+since storing in hours would not allow 30 min sessions for instance, while storing in seconds
+is too granular, not providing valuable information for this type of event.
+
+For simplicity, for now, the 'speaker' property consists of a StringProperty with the speaker name.
+
+Lastly, the 'date' property is a DateProperty, while the 'startTime' property is a TimeProperty,
+as expected for those types of properties. Inputs formats are 'YYYY-MM-DD' and 'HH24:MI'. If an
+incorrect format is provided, a proper error is returned.
 
 ###Sessions Messages Implementation
 
@@ -50,7 +66,7 @@ entity was needed so far.
 
 To use new indexes, 2 new APIs were created:
 - *getQuickWorkshops*: return all workshops only with duration at most 2h.
-- *getSessionsBySpeakerAndDate*: returns all sessions from a specific speaker, on a specific date.
+- *getSessionsBySpeakerAndDate*: returns all sessions from a specific speaker, in a given date range.
 
 For that, 2 new composite indexes were created in index.yaml file:
 ```
@@ -72,12 +88,18 @@ in more than one property.
 
 One possible solution in our scenario is based on the fact that in our system design, the type of sessions 
 are enumerated, so we can turn the inequality on the typeOfSession into a 'member of' filter, where 
-instead of looking for sessionType != 'WORKSHOP', we can look for sessionType in ['LECTURE', 'KEYNOTE'].
+instead of looking for sessionType != 'WORKSHOP', we can look for sessionType in ['NOT_SPECIFIED, 'LECTURE', 'KEYNOTE'].
 
 This enumeration shall be clear for the endUser, and new kinds of sessions would require a new system
 deployment to be supported.
 
 This query was implemented in API *getEarlyNonWorkshops*.
+
+In case one of the fields was not an enumeration, I believe a possible solution would be to proceed to the
+extra inequality filters from the application side, executing the query on the most restrictive filter
+first (i.e., the query that we expect would return the smallest result set), and on the application python
+code, iterate the results filtering on the extra conditions. Having extra filters after a query execution
+is not the best solution, but given the ndb restrictions, would be able to satisfy the requirements.
 
 ##Task 4: Add a task
 

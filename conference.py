@@ -555,7 +555,7 @@ class ConferenceApi(remote.Service):
 
         sessions = Session.query()
         # filter sessions by startTime and typeOfSession
-        sessions = sessions.filter(Session.startTime < 190000)
+        sessions = sessions.filter(Session.startTime < datetime.strptime('19:00', "%H:%M").time())
         # retrieve sessions all sessions that are not WORKSHOP, i.e., are from any other possible
         # enumeration value
         sessions = sessions.filter(Session.typeOfSession.IN(['NOT_SPECIFIED', 'LECTURE', 'KEYNOTE']))
